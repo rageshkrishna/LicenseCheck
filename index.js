@@ -18,7 +18,7 @@ function main() {
       if (err) {
         console.log('Error: ', err);
       }
-      fs.writeFileSync('./licenses.json', JSON.stringify(bag.licenseMap), 'utf8');
+      fs.writeFileSync('./licenses.json', JSON.stringify(bag.licenseMap, null, 2), 'utf8');
       console.log('Done');
     }
   );
@@ -42,6 +42,7 @@ function loadDependencies(bag, next) {
   console.log('Loading dependencies');
   var packageContent = fs.readFileSync(bag.packageFile, 'utf8');
   var packageJson = JSON.parse(packageContent);
+  bag.packageJson = packageJson;
   bag.dependencies = Object.keys(packageJson.dependencies);
   return next();
 }
@@ -65,7 +66,10 @@ function getDependencyLicenses(bag, next) {
           }
           var resBody = JSON.parse(res.body);
           console.log('Got license for ' + dep, ":", resBody.license);
-          bag.licenseMap[dep] = resBody.license;
+          bag.licenseMap[dep] = {
+            version: bag.packageJson.dependencies[dep],
+            license: resBody.license || 'UNKNOWN'
+          };
           return nextDep();
         }
       );
